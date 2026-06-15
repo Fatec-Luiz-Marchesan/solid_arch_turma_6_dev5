@@ -18,11 +18,13 @@ const UserRoutes = require('./routes/UserRoutes')
 const MessageRoutes = require('./routers/MessageRouters')
 const PaymentRoutes = require('./routers/PaymentRouters')
 const UserAccountRoutes = require('./routers/UserAccountRouters')
+const VaccineRoutes = require('./routers/VaccineRouters')
 
 app.use('/pets', PetRoutes)
 app.use('/users', UserRoutes)
 app.use('/messages', MessageRoutes)
 app.use('/payments', PaymentRoutes)
 app.use('/user', UserAccountRoutes)
+app.use('/vaccines', VaccineRoutes)
 
 app.listen(5000)
