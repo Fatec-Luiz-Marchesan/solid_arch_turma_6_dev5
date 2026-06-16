@@ -148,4 +148,24 @@ describe('User Model — validações do schema', () => {
       expect(u.birthDate).toBeInstanceOf(Date);
     });
   });
+  describe('campo role', () => {
+    it('tem default user', () => {
+      const u = new User(validData);
+      expect(u.role).toBe('user');
+    });
+
+    it('aceita role admin', () => {
+      const u = new User({ ...validData, role: 'admin' });
+      const err = u.validateSync();
+      expect(err).toBeUndefined();
+      expect(u.role).toBe('admin');
+    });
+
+    it('rejeita role fora do enum', () => {
+      const u = new User({ ...validData, role: 'superadmin' });
+      const err = u.validateSync();
+      expect(err).toBeDefined();
+      expect(err.errors.role).toBeDefined();
+    });
+  });
 });
