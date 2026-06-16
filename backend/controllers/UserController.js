@@ -136,78 +136,62 @@ module.exports = class UserController {
   }
 
   static async editUser(req, res) {
-    const token = getToken(req)
+  const token = getToken(req)
+  const user = await getUserByToken(token)
 
-    //console.log(token);
+  const name = req.body.name
+  const email = req.body.email
+  const phone = req.body.phone
+  const password = req.body.password
+  const confirmpassword = req.body.confirmpassword
 
-    const user = await getUserByToken(token)
-
-    // console.log(user);
-    // console.log(req.body)
-    // console.log(req.file.filename)
-
-    const name = req.body.name
-    const email = req.body.email
-    const phone = req.body.phone
-    const password = req.body.password
-    const confirmpassword = req.body.confirmpassword
-
-    let image = ''
-
-    if (req.file) {
-      image = req.file.filename
-    }
-
-    // validations
-    const validation = validateRegister(req.body)
-    if (!validation.isValid) {
-      res.status(422).json({ message: validation.errors[0] })
-      return
-    }
-
-    user.phone = phone
-
-    const bio = req.body.bio
-    user.bio = bio !== undefined && bio !== null ? bio.trim() : user.bio || ''
-
-    // check if password match
-    if (password != confirmpassword) {
-      res.status(422).json({ error: 'As senhas não conferem.' })
-
-      // change password
-    } else if (password == confirmpassword && password != null) {
-      // creating password
-      const salt = await bcrypt.genSalt(12)
-      const reqPassword = req.body.password
-
-      const passwordHash = await bcrypt.hash(reqPassword, salt)
-
-      user.password = passwordHash
-    }
-if (email && email !== user.email) {
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser && existingUser._id.toString() !== user._id.toString()) {
-    return res.status(422).json({
-      message: 'Por favor, utilize outro e-mail!',
-    });
+  let image = ''
+  if (req.file) {
+    image = req.file.filename
   }
 
-  user.email = email;
-}
-    try {
-      // returns updated data
-      const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id },
-        { $set: user },
-        { new: true },
-      )
-      res.json({
-        message: 'Usuário atualizado com sucesso!',
-        data: updatedUser,
+  // validações
+  const validation = validateRegister(req.body)
+  if (!validation.isValid) {
+    return res.status(422).json({ message: validation.errors[0] })
+  }
+
+  user.phone = phone
+  const bio = req.body.bio
+  user.bio = bio !== undefined && bio !== null ? bio.trim() : user.bio || ''
+
+  // senha
+  if (password != confirmpassword) {
+    return res.status(422).json({ error: 'As senhas não conferem.' })
+  } else if (password && password === confirmpassword) {
+    const salt = await bcrypt.genSalt(12)
+    const passwordHash = await bcrypt.hash(password, salt)
+    user.password = passwordHash
+  }
+
+  // **checagem de e-mail duplicado**
+  if (email && email !== user.email) {
+    const existingUser = await User.findOne({ email })
+    if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+      return res.status(422).json({
+        message: 'Por favor, utilize outro e-mail!',
       })
-    } catch (error) {
-      res.status(500).json({ message: error })
     }
+    user.email = email
   }
-}
+
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user._id },
+      { $set: user },
+      { new: true },
+    )
+    res.json({
+      message: 'Usuário atualizado com sucesso!',
+      data: updatedUser,
+    })
+  } catch (error) {
+    res.status(500).json({ message: error })
+  };
+};
+};
