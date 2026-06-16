@@ -218,4 +218,24 @@ describe('Pet Model — validações do schema', () => {
       expect(err).toBeUndefined();
     });
   });
+  describe('campo species', () => {
+    it('tem default other', () => {
+      const pet = new Pet(validData);
+      expect(pet.species).toBe('other');
+    });
+
+    it('aceita species válido', () => {
+      const pet = new Pet({ ...validData, species: 'dog' });
+      const err = pet.validateSync();
+      expect(err).toBeUndefined();
+      expect(pet.species).toBe('dog');
+    });
+
+    it('rejeita species fora do enum', () => {
+      const pet = new Pet({ ...validData, species: 'dragon' });
+      const err = pet.validateSync();
+      expect(err).toBeDefined();
+      expect(err.errors.species).toBeDefined();
+    });
+  });
 });

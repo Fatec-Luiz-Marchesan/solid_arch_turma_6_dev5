@@ -4,6 +4,7 @@ const Pet = require('../models/Pet')
 const getUserByToken = require('../helpers/get-user-by-token')
 const getToken = require('../helpers/get-token')
 const ObjectId = require('mongoose').Types.ObjectId
+const { validatePet } = require('../helpers/validate-pet')
 
 module.exports = class PetController {
   // create a pet
@@ -21,23 +22,9 @@ module.exports = class PetController {
     // return
 
     // validations
-    if (!name) {
-      res.status(422).json({ message: 'O nome é obrigatório!' })
-      return
-    }
-
-    if (!age) {
-      res.status(422).json({ message: 'A idade é obrigatória!' })
-      return
-    }
-
-    if (!weight) {
-      res.status(422).json({ message: 'O peso é obrigatório!' })
-      return
-    }
-
-    if (!color) {
-      res.status(422).json({ message: 'A cor é obrigatória!' })
+    const validation = validatePet(req.body)
+    if (!validation.isValid) {
+      res.status(422).json({ message: validation.errors[0] })
       return
     }
 
@@ -45,7 +32,6 @@ module.exports = class PetController {
       res.status(422).json({ message: 'A imagem é obrigatória!' })
       return
     }
-
     // get user
     const token = getToken(req)
     const user = await getUserByToken(token)
@@ -53,6 +39,7 @@ module.exports = class PetController {
     // create pet
     const pet = new Pet({
       name: name,
+      species: req.body.species || 'other',
       age: age,
       description: description,
       weight: weight,
