@@ -32,6 +32,91 @@ const makeRes = () => {
 
 describe('UserController — testes de integração', () => {
   beforeEach(() => jest.clearAllMocks());
+  describe('register', () => {
+    it('retorna 422 quando nome ausente', async () => {
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          email: 'j@email.com', phone: '11999998888',
+          password: 'abc123', confirmpassword: 'abc123',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 422 quando email ausente', async () => {
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          name: 'João', phone: '11999998888',
+          password: 'abc123', confirmpassword: 'abc123',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 422 quando email inválido', async () => {
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          name: 'João', email: 'invalido', phone: '11999998888',
+          password: 'abc123', confirmpassword: 'abc123',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 422 quando senha ausente', async () => {
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          name: 'João', email: 'j@email.com', phone: '11999998888',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 422 quando senhas não conferem', async () => {
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          name: 'João', email: 'j@email.com', phone: '11999998888',
+          password: 'abc123', confirmpassword: 'xyz789',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 422 quando senha muito curta', async () => {
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          name: 'João', email: 'j@email.com', phone: '11999998888',
+          password: '123', confirmpassword: '123',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 422 quando email já existe', async () => {
+      User.findOne = jest.fn().mockResolvedValueOnce({ _id: 'u2', email: 'j@email.com' });
+      const res = makeRes();
+      await UserController.register(
+        makeReq({
+          name: 'João', email: 'j@email.com', phone: '11999998888',
+          password: 'abc123', confirmpassword: 'abc123',
+        }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+  });
 
   describe('login', () => {
     it('retorna 422 quando email ausente', async () => {
