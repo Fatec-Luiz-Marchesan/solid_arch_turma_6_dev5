@@ -1,6 +1,10 @@
-const { describe, it, expect, beforeEach, afterAll } = require('@jest/globals');
+const { describe, it, expect, beforeEach } = require('@jest/globals');
 const request = require('supertest');
 const express = require('express');
+
+jest.mock('express-rate-limit', () => () => (req, res, next) => next());
+
+jest.mock('../../helpers/check-token', () => (req, res, next) => next());
 
 jest.mock('../../helpers/check-admin', () => (req, res, next) => {
   req.user = { _id: '507f1f77bcf86cd799439011', role: 'admin', name: 'Admin Teste' };
@@ -37,24 +41,12 @@ jest.mock('../../models/Message', () => ({
   countDocuments: jest.fn(async () => 10),
 }));
 
-const AdminController = require('../../controllers/AdminController');
+const adminRouter = require('../../routers/AdminRouters');
 
 function makeAdminApp() {
   const app = express();
   app.use(express.json());
-
-  const checkAdmin = require('../../helpers/check-admin');
-
-  const router = express.Router();
-  router.post('/bootstrap', AdminController.bootstrap);
-  router.get('/users', checkAdmin, AdminController.listUsers);
-  router.get('/users/:id', checkAdmin, AdminController.getUser);
-  router.patch('/users/:id/promote', checkAdmin, AdminController.promote);
-  router.patch('/users/:id/demote', checkAdmin, AdminController.demote);
-  router.delete('/users/:id', checkAdmin, AdminController.deleteUser);
-  router.get('/stats', checkAdmin, AdminController.stats);
-
-  app.use('/admin', router);
+  app.use('/admin', adminRouter);
   return app;
 }
 
@@ -87,7 +79,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindByIdAndUpdate = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(promotedUser)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).post('/admin/bootstrap');
       expect(res.status).toBe(200);
@@ -96,7 +87,6 @@ describe('Admin — testes de integração', () => {
 
     it('bloqueia quando já existe um admin (403)', async () => {
       mockUserCountDocuments = jest.fn(async () => 1);
-      app = makeAdminApp();
 
       const res = await request(app).post('/admin/bootstrap');
       expect(res.status).toBe(403);
@@ -114,7 +104,6 @@ describe('Admin — testes de integração', () => {
           sort: jest.fn(() => Promise.resolve(users)),
         })),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).get('/admin/users');
       expect(res.status).toBe(200);
@@ -135,7 +124,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindById = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(user)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).get(`/admin/users/${VALID_ID}`);
       expect(res.status).toBe(200);
@@ -146,7 +134,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindById = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(null)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).get(`/admin/users/${VALID_ID}`);
       expect(res.status).toBe(404);
@@ -168,7 +155,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindByIdAndUpdate = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(promoted)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).patch(`/admin/users/${VALID_ID}/promote`);
       expect(res.status).toBe(200);
@@ -180,7 +166,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindById = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(admin)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).patch(`/admin/users/${VALID_ID}/promote`);
       expect(res.status).toBe(422);
@@ -190,7 +175,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindById = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(null)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).patch(`/admin/users/${VALID_ID}/promote`);
       expect(res.status).toBe(404);
@@ -213,7 +197,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindByIdAndUpdate = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(demoted)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).patch(`/admin/users/${OTHER_ID}/demote`);
       expect(res.status).toBe(200);
@@ -225,7 +208,6 @@ describe('Admin — testes de integração', () => {
         select: jest.fn(() => Promise.resolve(admin)),
       }));
       mockUserCountDocuments = jest.fn(async () => 1);
-      app = makeAdminApp();
 
       const res = await request(app).patch(`/admin/users/${VALID_ID}/demote`);
       expect(res.status).toBe(422);
@@ -236,7 +218,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindById = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(user)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).patch(`/admin/users/${VALID_ID}/demote`);
       expect(res.status).toBe(422);
@@ -250,7 +231,6 @@ describe('Admin — testes de integração', () => {
         select: jest.fn(() => Promise.resolve(user)),
       }));
       mockUserFindByIdAndDelete = jest.fn(async () => true);
-      app = makeAdminApp();
 
       const res = await request(app).delete(`/admin/users/${OTHER_ID}`);
       expect(res.status).toBe(200);
@@ -265,7 +245,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindById = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(null)),
       }));
-      app = makeAdminApp();
 
       const res = await request(app).delete(`/admin/users/${OTHER_ID}`);
       expect(res.status).toBe(404);
@@ -283,7 +262,6 @@ describe('Admin — testes de integração', () => {
         if (query && query.role === 'admin') return 1;
         return 5;
       });
-      app = makeAdminApp();
 
       const res = await request(app).get('/admin/stats');
       expect(res.status).toBe(200);
@@ -306,7 +284,6 @@ describe('Admin — testes de integração', () => {
           sort: jest.fn(() => Promise.resolve([user])),
         })),
       }));
-      app = makeAdminApp();
 
       const listRes = await request(app).get('/admin/users');
       expect(listRes.status).toBe(200);
@@ -318,7 +295,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindByIdAndUpdate = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(promoted)),
       }));
-      app = makeAdminApp();
 
       const promoteRes = await request(app).patch(`/admin/users/${OTHER_ID}/promote`);
       expect(promoteRes.status).toBe(200);
@@ -333,7 +309,6 @@ describe('Admin — testes de integração', () => {
       mockUserFindByIdAndUpdate = jest.fn(() => ({
         select: jest.fn(() => Promise.resolve(demoted)),
       }));
-      app = makeAdminApp();
 
       const demoteRes = await request(app).patch(`/admin/users/${OTHER_ID}/demote`);
       expect(demoteRes.status).toBe(200);
@@ -342,7 +317,6 @@ describe('Admin — testes de integração', () => {
         select: jest.fn(() => Promise.resolve(demoted)),
       }));
       mockUserFindByIdAndDelete = jest.fn(async () => true);
-      app = makeAdminApp();
 
       const deleteRes = await request(app).delete(`/admin/users/${OTHER_ID}`);
       expect(deleteRes.status).toBe(200);
