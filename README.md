@@ -747,6 +747,29 @@ brasileiro (`12345-678` ou `12345678`), `latitude` entre -90 e 90,
 `longitude` entre -180 e 180.
 
 ---
+---
+
+## Endpoints de Review
+
+| Método | Rota                              | Quem pode             |
+|--------|-----------------------------------|-----------------------|
+| POST   | /reviews                          | Adotante do pet       |
+| GET    | /reviews/user/:userId             | Público               |
+| GET    | /reviews/user/:userId/average     | Público               |
+| GET    | /reviews/my-reviews               | Usuário logado        |
+| GET    | /reviews/:id                      | Público               |
+| PATCH  | /reviews/:id                      | Autor da review       |
+| DELETE | /reviews/:id                      | Autor da review       |
+
+### Regras de negócio
+
+- Só é possível avaliar pets com status `adopted`.
+- Apenas o adotante (campo `adopter`) do pet pode criar a review.
+- Uma review por adoção (não é possível avaliar o mesmo pet duas vezes).
+- Apenas o autor da review pode editar ou deletar.
+- Rating é inteiro entre 1 e 5; comentário entre 10 e 1000 caracteres.
+
+---
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 
