@@ -178,12 +178,12 @@ module.exports = class UserController {
       user.password = passwordHash
     }
 if (email && email !== user.email) {
-  // validação do formato do email
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  // validação de tipo e formato do email
+  if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(422).json({ message: 'E-mail inválido!' })
   }
 
-  const existingUser = await User.findOne({ email })
+  const existingUser = await User.findOne({ email: { $eq: email } })
 
   if (existingUser && existingUser._id.toString() !== user._id.toString()) {
     return res.status(422).json({
