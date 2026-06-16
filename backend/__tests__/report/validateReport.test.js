@@ -145,4 +145,39 @@ describe('validateReport helper', () => {
       expect(normalizeText(42)).toBe(42);
     });
   });
+  describe('validateReport - evidence', () => {
+  const valid = { targetType: 'pet', targetId: 'pet-1', reason: 'spam' };
+
+  it('aceita ausência de evidence', () => {
+    expect(validateReport(valid).isValid).toBe(true);
+  });
+
+  it('aceita evidence válido', () => {
+    expect(validateReport({ ...valid, evidence: ['https://img.com/1.jpg'] }).isValid).toBe(true);
+  });
+
+  it('aceita evidence vazio', () => {
+    expect(validateReport({ ...valid, evidence: [] }).isValid).toBe(true);
+  });
+
+  it('rejeita evidence não-array', () => {
+    const r = validateReport({ ...valid, evidence: 'string' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /array/.test(e))).toBe(true);
+  });
+
+  it('rejeita mais de 5 itens', () => {
+    const r = validateReport({ ...valid, evidence: Array(6).fill('url') });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /5/.test(e))).toBe(true);
+  });
+
+  it('rejeita item maior que 500 caracteres', () => {
+    expect(validateReport({ ...valid, evidence: ['a'.repeat(501)] }).isValid).toBe(false);
+  });
+
+  it('rejeita item não-string', () => {
+    expect(validateReport({ ...valid, evidence: [123] }).isValid).toBe(false);
+  });
+});
 });
