@@ -22,17 +22,26 @@ const User = mongoose.model(
     phone: {
       type: String,
     },
-     bio: {
+    role: {
       type: String,
-      trim: true,
-      maxlength: 200,
-      default: '',
+      enum: ['user', 'admin'],
+      default: 'user',
     },
+    bio: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    bio: {
+      type: String,
+      default: '',
+      trim: true,
+     },
     birthDate: {
       type: Date,
       default: null,
     },
-  }, {timestamps: true}),
+  }, { timestamps: true }),
 )
 
 module.exports = User
