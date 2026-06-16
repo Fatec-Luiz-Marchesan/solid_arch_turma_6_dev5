@@ -27,8 +27,6 @@ module.exports = class UserController {
       return
     }
 
-    user.name = name
-
     if (!password) {
       res.status(422).json({ message: 'A senha é obrigatória!' })
       return
@@ -126,7 +124,6 @@ module.exports = class UserController {
   static async getUserById(req, res) {
   const id = req.params.id
 
-  // validação do ID
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(422).json({ message: 'ID inválido!' })
   }
@@ -137,8 +134,9 @@ module.exports = class UserController {
     return res.status(422).json({ message: 'Usuário não encontrado!' })
   }
 
-  res.status(200).json({ user })
+  return res.status(200).json({ user })
 }
+
 
   static async editUser(req, res) {
   const token = getToken(req)
