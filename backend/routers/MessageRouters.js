@@ -13,7 +13,9 @@ const messageLimiter = rateLimit({
 
 router.post('/', messageLimiter, verifyToken, MessageController.create);
 router.get('/', messageLimiter, verifyToken, MessageController.list);
+router.get('/conversation/:userId/:petId', messageLimiter, verifyToken, MessageController.conversation);
 router.get('/:id', messageLimiter, verifyToken, MessageController.getById);
+router.patch('/:id/read', messageLimiter, verifyToken, MessageController.markAsRead);
 router.patch('/:id', messageLimiter, verifyToken, MessageController.update);
 router.delete('/:id', messageLimiter, verifyToken, MessageController.delete);
 
