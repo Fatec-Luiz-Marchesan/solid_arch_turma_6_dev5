@@ -32,6 +32,11 @@ const User = mongoose.model(
       default: '',
       trim: true,
     },
+    bio: {
+      type: String,
+      default: '',
+      trim: true,
+     },
     birthDate: {
       type: Date,
       default: null,
