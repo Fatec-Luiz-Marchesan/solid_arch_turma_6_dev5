@@ -18,7 +18,15 @@ function validateReview(data) {
   } else if (data.comment.length > 1000) {
     errors.push('O comentário não pode ter mais de 1000 caracteres!');
   }
-
+if (
+    data.recommendation !== undefined &&
+    data.recommendation !== null &&
+    data.recommendation !== ''
+  ) {
+    if (!['yes', 'no', 'maybe'].includes(data.recommendation)) {
+      errors.push('recommendation deve ser yes, no ou maybe!');
+    }
+  }
   if (!data.petId) {
     errors.push('O ID do pet é obrigatório!');
   } else if (typeof data.petId !== 'string' || !/^[a-fA-F0-9]{24}$/.test(data.petId)) {

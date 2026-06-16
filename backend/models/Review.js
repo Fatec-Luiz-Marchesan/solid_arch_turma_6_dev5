@@ -22,6 +22,11 @@ const Review = mongoose.model(
         maxlength: 1000,
         trim: true,
       },
+      recommendation: {
+        type: String,
+        enum: ['yes', 'no', 'maybe'],
+        default: null,
+      },
       pet: {
         type: Object,
         required: true,

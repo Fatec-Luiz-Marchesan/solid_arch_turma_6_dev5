@@ -72,4 +72,37 @@ describe('validateReview helper', () => {
     expect(r.isValid).toBe(false);
     expect(r.errors[0]).toMatch(/inválido/i);
   });
+  describe('validateReview - recommendation', () => {
+  const valid = {
+    rating: 5,
+    comment: 'Adoção tranquila, doador atencioso.',
+    petId: '507f1f77bcf86cd799439011',
+  };
+
+  it('aceita ausência de recommendation', () => {
+    expect(validateReview(valid).isValid).toBe(true);
+  });
+
+  it('aceita recommendation yes', () => {
+    expect(validateReview({ ...valid, recommendation: 'yes' }).isValid).toBe(true);
+  });
+
+  it('aceita recommendation no', () => {
+    expect(validateReview({ ...valid, recommendation: 'no' }).isValid).toBe(true);
+  });
+
+  it('aceita recommendation maybe', () => {
+    expect(validateReview({ ...valid, recommendation: 'maybe' }).isValid).toBe(true);
+  });
+
+  it('aceita recommendation null', () => {
+    expect(validateReview({ ...valid, recommendation: null }).isValid).toBe(true);
+  });
+
+  it('rejeita recommendation inválido', () => {
+    const r = validateReview({ ...valid, recommendation: 'absolutely' });
+    expect(r.isValid).toBe(false);
+    expect(r.errors.some((e) => /recommendation/.test(e))).toBe(true);
+  });
+});
 });
