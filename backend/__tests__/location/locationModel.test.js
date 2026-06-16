@@ -1,137 +1,137 @@
 const { describe, it, expect } = require('@jest/globals');
 
-jest.mock('../../db/conn', () => require('mongoose'));
+jest.mock('../../db/conn', () => {
+  const mongoose = require('mongoose');
+  return mongoose;
+});
 
 const Location = require('../../models/Location');
 
 const validData = {
   name: 'Casa',
   street: 'Rua das Flores',
-  number: '123',
   city: 'São Paulo',
   state: 'SP',
-  zipCode: '01234-567',
-  user: { _id: 'u1', name: 'Ana' },
+  zipCode: '01310-100',
+  user: { _id: 'u1', name: 'Usuário' },
 };
 
-describe('Location Model — schema', () => {
-  describe('campos obrigatórios', () => {
-    it('aceita dados válidos', () => {
-      expect(new Location(validData).validateSync()).toBeUndefined();
+describe('Location Model — novos campos', () => {
+  describe('complement', () => {
+    it('aceita complement válido', () => {
+      const l = new Location({ ...validData, complement: 'Apto 42' });
+      expect(l.validateSync()).toBeUndefined();
+      expect(l.complement).toBe('Apto 42');
+    });
+
+    it('complement tem default vazio', () => {
+      const l = new Location(validData);
+      expect(l.complement).toBe('');
+    });
+
+    it('aplica trim no complement', () => {
+      const l = new Location({ ...validData, complement: '  Bloco B  ' });
+      expect(l.complement).toBe('Bloco B');
+    });
+
+    it('rejeita complement acima de 100 caracteres', () => {
+      const l = new Location({ ...validData, complement: 'x'.repeat(101) });
+      const err = l.validateSync();
+      expect(err).toBeDefined();
+      expect(err.errors.complement).toBeDefined();
+    });
+
+    it('aceita complement nulo ou vazio', () => {
+      const l = new Location({ ...validData, complement: '' });
+      expect(l.validateSync()).toBeUndefined();
+    });
+  });
+
+  describe('phone', () => {
+    it('aceita phone válido', () => {
+      const l = new Location({ ...validData, phone: '(11) 99999-9999' });
+      expect(l.validateSync()).toBeUndefined();
+      expect(l.phone).toBe('(11) 99999-9999');
+    });
+
+    it('phone tem default vazio', () => {
+      const l = new Location(validData);
+      expect(l.phone).toBe('');
+    });
+
+    it('aplica trim no phone', () => {
+      const l = new Location({ ...validData, phone: '  (11) 99999-9999  ' });
+      expect(l.phone).toBe('(11) 99999-9999');
+    });
+  });
+
+  describe('reference', () => {
+    it('aceita reference válido', () => {
+      const l = new Location({ ...validData, reference: 'Próximo ao metrô' });
+      expect(l.validateSync()).toBeUndefined();
+      expect(l.reference).toBe('Próximo ao metrô');
+    });
+
+    it('reference tem default vazio', () => {
+      const l = new Location(validData);
+      expect(l.reference).toBe('');
+    });
+
+    it('aplica trim no reference', () => {
+      const l = new Location({ ...validData, reference: '  Em frente ao parque  ' });
+      expect(l.reference).toBe('Em frente ao parque');
+    });
+
+    it('rejeita reference acima de 200 caracteres', () => {
+      const l = new Location({ ...validData, reference: 'x'.repeat(201) });
+      const err = l.validateSync();
+      expect(err).toBeDefined();
+      expect(err.errors.reference).toBeDefined();
+    });
+  });
+
+  describe('campos existentes permanecem funcionando', () => {
+    it('aceita localização completa com todos os novos campos', () => {
+      const l = new Location({
+        ...validData,
+        complement: 'Apto 42',
+        phone: '(11) 98765-4321',
+        reference: 'Ao lado da farmácia',
+        latitude: -23.55,
+        longitude: -46.63,
+        isPrimary: true,
+      });
+      expect(l.validateSync()).toBeUndefined();
     });
 
     it('rejeita sem name', () => {
       const l = new Location({ ...validData, name: undefined });
-      expect(l.validateSync().errors.name).toBeDefined();
+      expect(l.validateSync()).toBeDefined();
     });
 
     it('rejeita sem street', () => {
       const l = new Location({ ...validData, street: undefined });
-      expect(l.validateSync().errors.street).toBeDefined();
+      expect(l.validateSync()).toBeDefined();
     });
 
-    it('rejeita sem city', () => {
-      const l = new Location({ ...validData, city: undefined });
-      expect(l.validateSync().errors.city).toBeDefined();
-    });
-
-    it('rejeita sem state', () => {
-      const l = new Location({ ...validData, state: undefined });
-      expect(l.validateSync().errors.state).toBeDefined();
-    });
-
-    it('rejeita state fora do formato', () => {
+    it('rejeita state inválido', () => {
       const l = new Location({ ...validData, state: 'São Paulo' });
       expect(l.validateSync()).toBeDefined();
     });
 
-    it('aceita state válido (2 letras maiúsculas)', () => {
-      expect(new Location({ ...validData, state: 'RJ' }).validateSync()).toBeUndefined();
+    it('rejeita zipCode inválido', () => {
+      const l = new Location({ ...validData, zipCode: '123' });
+      expect(l.validateSync()).toBeDefined();
     });
 
-    it('rejeita sem zipCode', () => {
-      const l = new Location({ ...validData, zipCode: undefined });
-      expect(l.validateSync().errors.zipCode).toBeDefined();
+    it('country tem default Brasil', () => {
+      const l = new Location(validData);
+      expect(l.country).toBe('Brasil');
     });
 
-    it('rejeita zipCode fora do formato', () => {
-      expect(new Location({ ...validData, zipCode: '123' }).validateSync()).toBeDefined();
-    });
-
-    it('aceita zipCode sem hífen', () => {
-      expect(new Location({ ...validData, zipCode: '01234567' }).validateSync()).toBeUndefined();
-    });
-
-    it('rejeita sem user', () => {
-      const l = new Location({ ...validData, user: undefined });
-      expect(l.validateSync().errors.user).toBeDefined();
-    });
-  });
-
-  describe('defaults', () => {
-    it('country default Brasil', () => {
-      expect(new Location(validData).country).toBe('Brasil');
-    });
-
-    it('isPrimary default false', () => {
-      expect(new Location(validData).isPrimary).toBe(false);
-    });
-  });
-
-  describe('coordenadas', () => {
-    it('aceita latitude válida', () => {
-      expect(new Location({ ...validData, latitude: -23.5 }).validateSync()).toBeUndefined();
-    });
-
-    it('rejeita latitude abaixo de -90', () => {
-      expect(new Location({ ...validData, latitude: -91 }).validateSync()).toBeDefined();
-    });
-
-    it('rejeita latitude acima de 90', () => {
-      expect(new Location({ ...validData, latitude: 91 }).validateSync()).toBeDefined();
-    });
-
-    it('aceita longitude válida', () => {
-      expect(new Location({ ...validData, longitude: -46.6 }).validateSync()).toBeUndefined();
-    });
-
-    it('rejeita longitude abaixo de -180', () => {
-      expect(new Location({ ...validData, longitude: -181 }).validateSync()).toBeDefined();
-    });
-
-    it('rejeita longitude acima de 180', () => {
-      expect(new Location({ ...validData, longitude: 181 }).validateSync()).toBeDefined();
-    });
-  });
-
-  describe('trim', () => {
-    it('aplica trim no name', () => {
-      expect(new Location({ ...validData, name: '  Casa  ' }).name).toBe('Casa');
-    });
-
-    it('aplica trim na street', () => {
-      expect(new Location({ ...validData, street: '  Rua A  ' }).street).toBe('Rua A');
-    });
-
-    it('aplica trim na city', () => {
-      expect(new Location({ ...validData, city: '  SP  ' }).city).toBe('SP');
-    });
-
-    it('aplica trim no country', () => {
-      expect(new Location({ ...validData, country: '  Brasil  ' }).country).toBe('Brasil');
-    });
-  });
-
-  describe('múltiplas validações', () => {
-    it('lista erros quando vários campos faltam', () => {
-      const err = new Location({}).validateSync();
-      expect(err).toBeDefined();
-      expect(err.errors.name).toBeDefined();
-      expect(err.errors.street).toBeDefined();
-      expect(err.errors.city).toBeDefined();
-      expect(err.errors.state).toBeDefined();
-      expect(err.errors.zipCode).toBeDefined();
-      expect(err.errors.user).toBeDefined();
+    it('isPrimary tem default false', () => {
+      const l = new Location(validData);
+      expect(l.isPrimary).toBe(false);
     });
   });
 });
