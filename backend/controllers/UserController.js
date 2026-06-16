@@ -9,7 +9,7 @@ const getUserByToken = require('../helpers/get-user-by-token')
 const getToken = require('../helpers/get-token')
 const createUserToken = require('../helpers/create-user-token')
 const { imageUpload } = require('../helpers/image-upload')
-const { validateUserEdit } = require('../helpers/validate-user-edit')
+const { validateUserEdit, isValidEmail } = require('../helpers/validate-user-edit')
 const { validateRegister, validateLogin } = require('../helpers/validate-auth')
 
 module.exports = class UserController {
@@ -179,7 +179,7 @@ module.exports = class UserController {
     }
 if (email && email !== user.email) {
   // validação de tipo e formato do email
-  if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (typeof email !== 'string' || !isValidEmail(email)) {
     return res.status(422).json({ message: 'E-mail inválido!' })
   }
 
