@@ -111,4 +111,35 @@ describe('createReport use case', () => {
       targetId: 'pet-123',
     });
   });
+  describe('createReport - evidence', () => {
+  it('persiste evidence com trim nos itens', async () => {
+    const repo = makeRepo();
+    await createReport({
+      data: { ...validData, evidence: ['  https://img.com/1.jpg  '] },
+      user: { _id: 'u1', name: 'Ana' },
+      ReportRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].evidence).toEqual(['https://img.com/1.jpg']);
+  });
+
+  it('usa evidence vazio por padrão', async () => {
+    const repo = makeRepo();
+    await createReport({
+      data: validData,
+      user: { _id: 'u1' },
+      ReportRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].evidence).toEqual([]);
+  });
+
+  it('rejeita evidence inválido (422)', async () => {
+    const r = await createReport({
+      data: { ...validData, evidence: 'string' },
+      user: { _id: 'u1' },
+      ReportRepository: makeRepo(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+});
 });

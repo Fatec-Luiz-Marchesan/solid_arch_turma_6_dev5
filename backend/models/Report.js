@@ -33,6 +33,16 @@ const reportSchema = new Schema(
       maxlength: 1000,
       default: '',
     },
+     evidence: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (arr) {
+          return arr.length <= 5 && arr.every((u) => typeof u === 'string' && u.length <= 500);
+        },
+        message: 'evidence deve ter no máximo 5 URLs de até 500 caracteres!',
+      },
+    },
     status: {
       type: String,
       enum: ['pending', 'reviewing', 'resolved', 'dismissed'],
