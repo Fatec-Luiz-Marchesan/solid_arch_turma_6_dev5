@@ -6,6 +6,8 @@ const ALLOWED_SEVERITIES = ['low', 'medium', 'high'];
 const TARGET_ID_MAX = 100;
 const DESCRIPTION_MAX = 1000;
 const MODERATOR_NOTE_MAX = 500;
+const EVIDENCE_MAX_ITEMS = 5;
+const EVIDENCE_ITEM_MAX = 500;
 
 // Colapsa espaços internos e apara as bordas.
 function normalizeText(value) {
@@ -94,6 +96,24 @@ function validateReport(data, { partial = false } = {}) {
   if (d.severity !== undefined) {
     validateSeverity(d.severity, errors);
   }
+  if (d.evidence !== undefined && d.evidence !== null) {
+    if (!Array.isArray(d.evidence)) {
+      errors.push('evidence deve ser um array!');
+    } else if (d.evidence.length > EVIDENCE_MAX_ITEMS) {
+      errors.push(`evidence deve ter no máximo ${EVIDENCE_MAX_ITEMS} itens!`);
+    } else {
+      for (const item of d.evidence) {
+        if (typeof item !== 'string') {
+          errors.push('Cada evidence deve ser um texto!');
+          break;
+        }
+        if (item.length > EVIDENCE_ITEM_MAX) {
+          errors.push(`Cada evidence não pode passar de ${EVIDENCE_ITEM_MAX} caracteres!`);
+          break;
+        }
+      }
+    }
+  }
 
   return { isValid: errors.length === 0, errors };
 }
@@ -118,4 +138,6 @@ module.exports = {
   TARGET_ID_MAX,
   DESCRIPTION_MAX,
   MODERATOR_NOTE_MAX,
+  EVIDENCE_MAX_ITEMS,
+  EVIDENCE_ITEM_MAX,
 };

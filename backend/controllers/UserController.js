@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 
 const User = require('../models/User')
 
@@ -8,7 +9,7 @@ const getUserByToken = require('../helpers/get-user-by-token')
 const getToken = require('../helpers/get-token')
 const createUserToken = require('../helpers/create-user-token')
 const { imageUpload } = require('../helpers/image-upload')
-const { validateUserEdit } = require('../helpers/validate-user-edit')
+const { validateUserEdit, isValidEmail } = require('../helpers/validate-user-edit')
 const { validateRegister, validateLogin } = require('../helpers/validate-auth')
 
 module.exports = class UserController {
@@ -25,8 +26,6 @@ module.exports = class UserController {
       res.status(422).json({ message: editValidation.errors[0] })
       return
     }
-
-    user.name = name
 
     if (!password) {
       res.status(422).json({ message: 'A senha é obrigatória!' })
@@ -123,28 +122,25 @@ module.exports = class UserController {
   }
 
   static async getUserById(req, res) {
-    const id = req.params.id
+  const id = req.params.id
 
-    const user = await User.findById(id)
-
-    if (!user) {
-      res.status(422).json({ message: 'Usuário não encontrado!' })
-      return
-    }
-
-    res.status(200).json({ user })
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(422).json({ message: 'ID inválido!' })
   }
 
+  const user = await User.findById(id)
+
+  if (!user) {
+    return res.status(422).json({ message: 'Usuário não encontrado!' })
+  }
+
+  return res.status(200).json({ user })
+}
+
+
   static async editUser(req, res) {
-    const token = getToken(req)
-
-    //console.log(token);
-
-    const user = await getUserByToken(token)
-
-    // console.log(user);
-    // console.log(req.body)
-    // console.log(req.file.filename)
+  const token = getToken(req)
+  const user = await getUserByToken(token)
 
     const name = req.body.name
     const email = req.body.email
@@ -152,23 +148,20 @@ module.exports = class UserController {
     const password = req.body.password
     const confirmpassword = req.body.confirmpassword
 
-    let image = ''
+  let image = ''
+  if (req.file) {
+    image = req.file.filename
+  }
 
-    if (req.file) {
-      image = req.file.filename
-    }
+  // validações
+  const validation = validateRegister(req.body)
+  if (!validation.isValid) {
+    return res.status(422).json({ message: validation.errors[0] })
+  }
 
-    // validations
-    const validation = validateRegister(req.body)
-    if (!validation.isValid) {
-      res.status(422).json({ message: validation.errors[0] })
-      return
-    }
-
-    user.phone = phone
-
-    const bio = req.body.bio
-    user.bio = bio !== undefined && bio !== null ? bio.trim() : user.bio || ''
+  user.phone = phone
+  const bio = req.body.bio
+  user.bio = bio !== undefined && bio !== null ? bio.trim() : user.bio || ''
 
     if (req.body.birthDate !== undefined) {
       user.birthDate = req.body.birthDate ? new Date(req.body.birthDate) : null
@@ -188,6 +181,22 @@ module.exports = class UserController {
 
       user.password = passwordHash
     }
+if (email && email !== user.email) {
+  // validação de tipo e formato do email
+  if (typeof email !== 'string' || !isValidEmail(email)) {
+    return res.status(422).json({ message: 'E-mail inválido!' })
+  }
+
+  const existingUser = await User.findOne({ email: { $eq: email } })
+
+  if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+    return res.status(422).json({
+      message: 'Por favor, utilize outro e-mail!',
+    })
+  }
+
+  user.email = email
+}
 
     try {
       // returns updated data
