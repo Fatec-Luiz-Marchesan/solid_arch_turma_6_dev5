@@ -148,6 +148,7 @@ module.exports = class UserController {
 
     const name = req.body.name
     const email = req.body.email
+    const normalizedEmail = typeof email === 'string' ? email.trim() : email
     const phone = req.body.phone
     const password = req.body.password
     const confirmpassword = req.body.confirmpassword
@@ -184,16 +185,22 @@ module.exports = class UserController {
 
       user.password = passwordHash
     }
-if (email && email !== user.email) {
-  const existingUser = await User.findOne({ email });
+if (normalizedEmail && normalizedEmail !== user.email) {
+  if (typeof normalizedEmail !== 'string') {
+    return res.status(422).json({
+      message: 'E-mail inválido!',
+    })
+  }
+
+  const existingUser = await User.findOne({ email: { $eq: normalizedEmail } })
 
   if (existingUser && existingUser._id.toString() !== user._id.toString()) {
     return res.status(422).json({
       message: 'Por favor, utilize outro e-mail!',
-    });
+    })
   }
 
-  user.email = email;
+  user.email = normalizedEmail
 }
     try {
       // returns updated data
