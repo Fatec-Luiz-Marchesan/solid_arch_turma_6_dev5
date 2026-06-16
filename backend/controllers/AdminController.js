@@ -12,7 +12,7 @@ const { demoteUser } = require('../usecases/admin/demoteUser');
 const { deleteUser } = require('../usecases/admin/deleteUser');
 const { getSystemStats } = require('../usecases/admin/getSystemStats');
 
-const AdminRepository = {
+const defaultRepository = {
   findAll: () => User.find().select('-password').sort('-createdAt'),
   findById: (id) => User.findById(id).select('-password'),
   countAdmins: () => User.countDocuments({ role: 'admin' }),
@@ -26,80 +26,122 @@ const AdminRepository = {
   delete: (id) => User.findByIdAndDelete(id),
 };
 
-module.exports = class AdminController {
-  static async bootstrap(req, res) {
-    const token = getToken(req);
-    const user = await getUserByToken(token);
+let AdminRepository = defaultRepository;
 
-    const result = await bootstrapAdmin({ user, AdminRepository });
-    if (!result.success) {
-      return res.status(result.status).json({ message: result.errors[0] });
+function setRepository(repo) {
+  AdminRepository = repo || defaultRepository;
+}
+
+function resetRepository() {
+  AdminRepository = defaultRepository;
+}
+
+class AdminController {
+  static async bootstrap(req, res) {
+    try {
+      const token = getToken(req);
+      const user = await getUserByToken(token);
+
+      const result = await bootstrapAdmin({ user, AdminRepository });
+      if (!result.success) {
+        return res.status(result.status).json({ message: result.errors[0] });
+      }
+      return res.status(200).json({
+        message: 'Você agora é administrador!',
+        data: result.user,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
-    return res.status(200).json({
-      message: 'Você agora é administrador!',
-      data: result.user,
-    });
   }
 
   static async listUsers(req, res) {
-    const result = await listAllUsers({ AdminRepository });
-    return res.status(200).json({ users: result.users });
+    try {
+      const result = await listAllUsers({ AdminRepository });
+      return res.status(200).json({ users: result.users });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
   }
 
   static async getUser(req, res) {
-    const result = await getUserDetails({
-      targetId: req.params.id,
-      AdminRepository,
-    });
-    if (!result.success) {
-      return res.status(result.status).json({ message: result.errors[0] });
+    try {
+      const result = await getUserDetails({
+        targetId: req.params.id,
+        AdminRepository,
+      });
+      if (!result.success) {
+        return res.status(result.status).json({ message: result.errors[0] });
+      }
+      return res.status(200).json({ user: result.user });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
-    return res.status(200).json({ user: result.user });
   }
 
   static async promote(req, res) {
-    const result = await promoteUser({
-      targetId: req.params.id,
-      AdminRepository,
-    });
-    if (!result.success) {
-      return res.status(result.status).json({ message: result.errors[0] });
+    try {
+      const result = await promoteUser({
+        targetId: req.params.id,
+        AdminRepository,
+      });
+      if (!result.success) {
+        return res.status(result.status).json({ message: result.errors[0] });
+      }
+      return res.status(200).json({
+        message: 'Usuário promovido a administrador!',
+        data: result.user,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
-    return res.status(200).json({
-      message: 'Usuário promovido a administrador!',
-      data: result.user,
-    });
   }
 
   static async demote(req, res) {
-    const result = await demoteUser({
-      targetId: req.params.id,
-      actor: req.user,
-      AdminRepository,
-    });
-    if (!result.success) {
-      return res.status(result.status).json({ message: result.errors[0] });
+    try {
+      const result = await demoteUser({
+        targetId: req.params.id,
+        actor: req.user,
+        AdminRepository,
+      });
+      if (!result.success) {
+        return res.status(result.status).json({ message: result.errors[0] });
+      }
+      return res.status(200).json({
+        message: 'Administrador rebaixado a usuário comum!',
+        data: result.user,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
-    return res.status(200).json({
-      message: 'Administrador rebaixado a usuário comum!',
-      data: result.user,
-    });
   }
 
   static async deleteUser(req, res) {
-    const result = await deleteUser({
-      targetId: req.params.id,
-      actor: req.user,
-      AdminRepository,
-    });
-    if (!result.success) {
-      return res.status(result.status).json({ message: result.errors[0] });
+    try {
+      const result = await deleteUser({
+        targetId: req.params.id,
+        actor: req.user,
+        AdminRepository,
+      });
+      if (!result.success) {
+        return res.status(result.status).json({ message: result.errors[0] });
+      }
+      return res.status(200).json({ message: result.message });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
-    return res.status(200).json({ message: result.message });
   }
 
   static async stats(req, res) {
-    const result = await getSystemStats({ AdminRepository });
-    return res.status(200).json({ stats: result.stats });
+    try {
+      const result = await getSystemStats({ AdminRepository });
+      return res.status(200).json({ stats: result.stats });
+    } catch (err) {
+      return res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
   }
-};
+}
+
+module.exports = AdminController;
+module.exports.setRepository = setRepository;
+module.exports.resetRepository = resetRepository;
