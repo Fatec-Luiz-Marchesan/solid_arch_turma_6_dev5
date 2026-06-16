@@ -184,7 +184,17 @@ module.exports = class UserController {
 
       user.password = passwordHash
     }
+if (email && email !== user.email) {
+  const existingUser = await User.findOne({ email });
 
+  if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+    return res.status(422).json({
+      message: 'Por favor, utilize outro e-mail!',
+    });
+  }
+
+  user.email = email;
+}
     try {
       // returns updated data
       const updatedUser = await User.findOneAndUpdate(
