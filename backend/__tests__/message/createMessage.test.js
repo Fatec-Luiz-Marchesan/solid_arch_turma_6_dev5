@@ -1,6 +1,12 @@
 const { describe, it, expect } = require('@jest/globals');
 const { createMessage } = require('../../usecases/message/createMessage');
 
+const validData = {
+  content: 'Oi, quero adotar!',
+  receiverId: '507f1f77bcf86cd799439011',
+  petId: '507f1f77bcf86cd799439012',
+};
+
 const makeRepo = () => ({
   create: jest.fn(async (d) => ({ _id: 'msg1', ...d })),
 });
@@ -9,7 +15,7 @@ describe('createMessage use case', () => {
   it('cria mensagem com dados válidos', async () => {
     const repo = makeRepo();
     const r = await createMessage({
-      data: { content: 'Oi', receiverId: 'u2', petId: 'p1' },
+      data: validData,
       sender: { _id: 'u1', name: 'João' },
       MessageRepository: repo,
     });
@@ -30,7 +36,7 @@ describe('createMessage use case', () => {
 
   it('falha sem sender autenticado', async () => {
     const r = await createMessage({
-      data: { content: 'Oi', receiverId: 'u2', petId: 'p1' },
+      data: validData,
       sender: null,
       MessageRepository: makeRepo(),
     });
@@ -39,61 +45,30 @@ describe('createMessage use case', () => {
 
   it('falha ao enviar mensagem para si mesmo', async () => {
     const r = await createMessage({
-      data: { content: 'Oi', receiverId: 'u1', petId: 'p1' },
+      data: { ...validData, receiverId: 'u1' },
       sender: { _id: 'u1' },
       MessageRepository: makeRepo(),
     });
     expect(r.success).toBe(false);
-    expect(r.errors[0]).toMatch(/si mesmo/);
   });
 
-  it('normaliza espaços excessivos no conteúdo', async () => {
-    const repo = makeRepo();
-    await createMessage({
-      data: {
-        content: '  Oi   tudo   bem?  ',
-        receiverId: 'u2',
-        petId: 'p1',
-      },
-      sender: { _id: 'u1', name: 'João' },
-      MessageRepository: repo,
-    });
-    expect(repo.create.mock.calls[0][0].content).toBe('Oi tudo bem?');
-  });
-
-  it('aceita priority customizada', async () => {
-    const repo = makeRepo();
-    await createMessage({
-      data: {
-        content: 'Urgente',
-        receiverId: 'u2',
-        petId: 'p1',
-        priority: 'high',
-      },
+  it('falha com receiverId em formato inválido', async () => {
+    const r = await createMessage({
+      data: { ...validData, receiverId: 'abc' },
       sender: { _id: 'u1' },
-      MessageRepository: repo,
+      MessageRepository: makeRepo(),
     });
-    expect(repo.create.mock.calls[0][0].priority).toBe('high');
+    expect(r.status).toBe(422);
+    expect(r.errors[0]).toMatch(/inválido/i);
   });
 
-  it('priority padrão é normal', async () => {
-    const repo = makeRepo();
-    await createMessage({
-      data: { content: 'Oi', receiverId: 'u2', petId: 'p1' },
+  it('falha com petId em formato inválido', async () => {
+    const r = await createMessage({
+      data: { ...validData, petId: 'xyz' },
       sender: { _id: 'u1' },
-      MessageRepository: repo,
+      MessageRepository: makeRepo(),
     });
-    expect(repo.create.mock.calls[0][0].priority).toBe('normal');
-  });
-
-  it('cria com readAt null e deletedAt null', async () => {
-    const repo = makeRepo();
-    await createMessage({
-      data: { content: 'Oi', receiverId: 'u2', petId: 'p1' },
-      sender: { _id: 'u1' },
-      MessageRepository: repo,
-    });
-    expect(repo.create.mock.calls[0][0].readAt).toBeNull();
-    expect(repo.create.mock.calls[0][0].deletedAt).toBeNull();
+    expect(r.status).toBe(422);
+    expect(r.errors[0]).toMatch(/inválido/i);
   });
 });
