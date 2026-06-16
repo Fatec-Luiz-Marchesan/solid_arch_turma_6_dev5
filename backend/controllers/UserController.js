@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 
 const User = require('../models/User')
 
@@ -123,17 +124,21 @@ module.exports = class UserController {
   }
 
   static async getUserById(req, res) {
-    const id = req.params.id
+  const id = req.params.id
 
-    const user = await User.findById(id)
-
-    if (!user) {
-      res.status(422).json({ message: 'Usuário não encontrado!' })
-      return
-    }
-
-    res.status(200).json({ user })
+  // validação do ID
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(422).json({ message: 'ID inválido!' })
   }
+
+  const user = await User.findById(id)
+
+  if (!user) {
+    return res.status(422).json({ message: 'Usuário não encontrado!' })
+  }
+
+  res.status(200).json({ user })
+}
 
   static async editUser(req, res) {
   const token = getToken(req)
@@ -175,16 +180,22 @@ module.exports = class UserController {
       user.password = passwordHash
     }
 if (email && email !== user.email) {
-  const existingUser = await User.findOne({ email });
+  // validação do formato do email
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(422).json({ message: 'E-mail inválido!' })
+  }
+
+  const existingUser = await User.findOne({ email })
 
   if (existingUser && existingUser._id.toString() !== user._id.toString()) {
     return res.status(422).json({
       message: 'Por favor, utilize outro e-mail!',
-    });
+    })
   }
 
-  user.email = email;
+  user.email = email
 }
+
     try {
       // returns updated data
       const updatedUser = await User.findOneAndUpdate(

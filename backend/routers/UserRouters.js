@@ -1,17 +1,19 @@
-const router = require('express').Router()
-
+const express = require('express')
+const router = express.Router()
+const rateLimit = require('express-rate-limit')
 const UserController = require('../controllers/UserController')
 
-const verifyToken = require('../helpers/check-token')
-const { imageUpload } = require('../helpers/image-upload')
+// limiter para login
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // máximo de 10 tentativas por IP
+  message: 'Muitas tentativas de login, tente novamente mais tarde.'
+})
 
+// rotas
 router.post('/register', UserController.register)
-router.post('/login', UserController.login)
-router.get('/checkuser', UserController.checkUser)
-router.get('/:id', UserController.getUserById)
-router.patch('/edit/:id',
-    verifyToken,
-    imageUpload.single('image'),
-    UserController.editUser)
+router.post('/login', loginLimiter, UserController.login) // aplica limiter aqui
+router.get('/user/:id', UserController.getUserById)
+router.patch('/user/edit', UserController.editUser)
 
 module.exports = router
