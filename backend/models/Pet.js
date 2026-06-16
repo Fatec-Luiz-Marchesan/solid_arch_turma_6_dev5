@@ -8,6 +8,11 @@ const Pet = mongoose.model(
       type: String,
       required: true,
     },
+    species: {
+      type: String,
+      enum: ['dog', 'cat', 'bird', 'rabbit', 'fish', 'reptile', 'other'],
+      default: 'other',
+    },
     age: {
       type: Number,
       required: true,

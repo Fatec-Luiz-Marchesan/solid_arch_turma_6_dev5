@@ -35,7 +35,8 @@ async function createReport({ data, user, ReportRepository }) {
     reason: d.reason,
     severity: d.severity || 'low',
     description:
-      d.description !== undefined ? normalizeText(d.description) : '',
+    d.description !== undefined ? normalizeText(d.description) : '',
+    evidence: Array.isArray(d.evidence) ? d.evidence.map((e) => e.trim()) : [],
     status: 'pending',
     moderatorNote: '',
     deletedAt: null,
