@@ -42,7 +42,7 @@ describe('Fluxo de Diet — testes de unidade adicionais', () => {
         endDate: '2025-01-01',
       });
       expect(r.isValid).toBe(false);
-      expect(r.errors.some((e) => /data/i.test(e))).toBe(true);
+      expect(r.errors.some((e) => /posterior/i.test(e))).toBe(true);
     });
 
     it('aceita mealFrequency dentro do intervalo válido', () => {
