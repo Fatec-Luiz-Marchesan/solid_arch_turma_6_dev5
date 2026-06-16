@@ -98,4 +98,35 @@ describe('createReview use case', () => {
     expect(r.status).toBe(409);
     expect(r.errors[0]).toMatch(/já.*avaliou/i);
   });
+  describe('createReview - recommendation', () => {
+  it('persiste recommendation quando informado', async () => {
+    const repo = makeRepo();
+    await createReview({
+      data: { ...validData, recommendation: 'yes' },
+      user: { _id: 'u1', name: 'Adotante' },
+      ReviewRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].recommendation).toBe('yes');
+  });
+
+  it('usa recommendation null por padrão', async () => {
+    const repo = makeRepo();
+    await createReview({
+      data: validData,
+      user: { _id: 'u1', name: 'Adotante' },
+      ReviewRepository: repo,
+    });
+    expect(repo.create.mock.calls[0][0].recommendation).toBeNull();
+  });
+
+  it('rejeita recommendation inválido (422)', async () => {
+    const r = await createReview({
+      data: { ...validData, recommendation: 'absolutely' },
+      user: { _id: 'u1' },
+      ReviewRepository: makeRepo(),
+    });
+    expect(r.success).toBe(false);
+    expect(r.status).toBe(422);
+  });
+});
 });

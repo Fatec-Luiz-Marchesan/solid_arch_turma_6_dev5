@@ -46,6 +46,7 @@ async function createReview({ data, user, ReviewRepository }) {
   const review = await ReviewRepository.create({
     rating: data.rating,
     comment: data.comment.trim(),
+    recommendation: data.recommendation || null,
     pet: { _id: pet._id, name: pet.name },
     reviewer: { _id: user._id, name: user.name },
     reviewed: { _id: pet.user._id, name: pet.user.name },

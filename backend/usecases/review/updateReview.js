@@ -22,7 +22,9 @@ async function updateReview({ id, data, user, ReviewRepository }) {
   const updated = await ReviewRepository.update(id, {
     rating: data.rating,
     comment: data.comment.trim(),
+    recommendation: data.recommendation !== undefined ? data.recommendation : review.recommendation,
   });
+  
 
   return { success: true, status: 200, review: updated };
 }
