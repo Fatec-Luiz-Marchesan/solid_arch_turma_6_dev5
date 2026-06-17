@@ -1,4 +1,4 @@
-const { ALLOWED_SPECIES } = require('../../helpers/validate-breed');
+const { ALLOWED_SPECIES, ALLOWED_COAT_TYPES } = require('../../helpers/validate-breed');
 
 const ALLOWED_SORT_FIELDS = ['name', 'createdAt'];
 const ALLOWED_SORT_ORDERS = ['asc', 'desc'];
@@ -12,6 +12,10 @@ async function listBreeds({ BreedRepository, filters = {}, pagination = {} }) {
 
   if (f.species !== undefined && !ALLOWED_SPECIES.includes(f.species)) {
     return { success: false, status: 422, errors: ['Espécie inválida!'] };
+  }
+
+  if (f.coatType !== undefined && !ALLOWED_COAT_TYPES.includes(f.coatType)) {
+    return { success: false, status: 422, errors: ['Tipo de pelagem inválido!'] };
   }
 
   const page = p.page !== undefined ? parseInt(p.page, 10) : DEFAULT_PAGE;
@@ -32,7 +36,9 @@ async function listBreeds({ BreedRepository, filters = {}, pagination = {} }) {
   const sortOrder = ALLOWED_SORT_ORDERS.includes(p.sortOrder) ? p.sortOrder : 'desc';
 
   const skip = (page - 1) * limit;
-  const query = f.species ? { species: f.species } : {};
+  const query = {};
+  if (f.species) query.species = f.species;
+  if (f.coatType) query.coatType = f.coatType;
 
   const [breeds, total] = await Promise.all([
     BreedRepository.findActive(query, { skip, limit, sortBy, sortOrder }),

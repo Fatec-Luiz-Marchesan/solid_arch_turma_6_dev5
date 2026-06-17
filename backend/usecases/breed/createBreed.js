@@ -13,13 +13,12 @@ async function createBreed({ data, user, BreedRepository }) {
   const d = data || {};
   const name = normalizeName(d.name);
 
-  // Uniqueness (case-insensitive) among active breeds
-  const existing = await BreedRepository.findByName(name);
+  const existing = await BreedRepository.findByName(name, d.species);
   if (existing) {
     return {
       success: false,
       status: 409,
-      errors: ['Já existe uma raça com este nome!'],
+      errors: ['Já existe uma raça com este nome para esta espécie!'],
     };
   }
 
@@ -36,6 +35,7 @@ async function createBreed({ data, user, BreedRepository }) {
     origin: d.origin !== undefined ? d.origin.trim() : '',
     hypoallergenic:
       typeof d.hypoallergenic === 'boolean' ? d.hypoallergenic : false,
+    coatType: d.coatType || 'short',
     user: { _id: user._id, name: user.name },
     deletedAt: null,
   });

@@ -46,6 +46,11 @@ const breedSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    coatType: {
+      type: String,
+      enum: ['short', 'long', 'curly', 'hairless', 'wire', 'double'],
+      default: 'short',
+    },
     user: {
       type: Object,
       required: true,

@@ -121,6 +121,13 @@ npm run test:coverage
 ```
 
 ---
+---
+
+- Filtro adicional na listagem: `GET /breeds?coatType=curly`
+- Novo campo `coatType` (short, long, curly, hairless, wire, double)
+- Unicidade de nome agora considera a espécie (mesmo nome em espécies diferentes é permitido)
+
+---
 
 ---
 
