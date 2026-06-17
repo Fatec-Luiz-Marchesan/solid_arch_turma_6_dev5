@@ -20,6 +20,6 @@ router.patch('/users/:id/promote', adminLimiter, checkAdmin, AdminController.pro
 router.patch('/users/:id/demote', adminLimiter, checkAdmin, AdminController.demote);
 router.delete('/users/:id', adminLimiter, checkAdmin, AdminController.deleteUser);
 router.get('/stats', adminLimiter, checkAdmin, AdminController.stats);
-router.get('/logs', adminLimiter, checkAdmin, AdminController.logs);
+router.get('/logs', adminLimiter, checkAdmin, AdminController.listLogs);
 
 module.exports = router;
