@@ -1,6 +1,7 @@
 const Breed = require('../models/Breed');
 const getToken = require('../helpers/get-token');
 const getUserByToken = require('../helpers/get-user-by-token');
+const { ALLOWED_COAT_TYPES } = require('../helpers/validate-breed');
 
 const { createBreed } = require('../usecases/breed/createBreed');
 const { listBreeds } = require('../usecases/breed/listBreeds');
@@ -8,7 +9,6 @@ const { getBreedById } = require('../usecases/breed/getBreedById');
 const { updateBreed } = require('../usecases/breed/updateBreed');
 const { deleteBreed } = require('../usecases/breed/deleteBreed');
 
-// Default repository: the only place that touches Mongoose directly.
 const defaultRepository = {
   create: (data) => new Breed(data).save(),
   findActive: (query = {}, options = {}) => {
@@ -21,12 +21,14 @@ const defaultRepository = {
   },
   countActive: (query = {}) => Breed.countDocuments({ ...query, deletedAt: null }),
   findById: (id) => Breed.findById(id),
-  // Case-insensitive, active-only name lookup for uniqueness checks
-  findByName: (name) =>
-    Breed.findOne({
+  findByName: (name, species) => {
+    const filter = {
       name: new RegExp(`^${escapeRegExp(name)}$`, 'i'),
       deletedAt: null,
-    }),
+    };
+    if (species) filter.species = species;
+    return Breed.findOne(filter);
+  },
   update: (id, data) => Breed.findByIdAndUpdate(id, data, { new: true }),
 };
 
@@ -65,10 +67,15 @@ class BreedController {
   }
 
   static async list(req, res) {
-    const { species, page, limit, sortBy, sortOrder } = req.query;
+    const { species, coatType, page, limit, sortBy, sortOrder } = req.query;
+
+    if (coatType !== undefined && !ALLOWED_COAT_TYPES.includes(coatType)) {
+      return res.status(422).json({ message: 'Tipo de pelagem inválido!' });
+    }
+
     const result = await listBreeds({
       BreedRepository,
-      filters: { species },
+      filters: { species, coatType },
       pagination: { page, limit, sortBy, sortOrder },
     });
 

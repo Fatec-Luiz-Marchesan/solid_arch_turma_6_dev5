@@ -1,5 +1,6 @@
 const ALLOWED_SPECIES = ['dog', 'cat', 'bird', 'rabbit', 'reptile', 'other'];
 const ALLOWED_SIZES = ['small', 'medium', 'large'];
+const ALLOWED_COAT_TYPES = ['short', 'long', 'curly', 'hairless', 'wire', 'double'];
 
 const NAME_MIN = 2;
 const NAME_MAX = 50;
@@ -118,9 +119,12 @@ function validateBreed(data, { partial = false } = {}) {
     }
   }
 
-  // hypoallergenic (optional)
   if (d.hypoallergenic !== undefined && typeof d.hypoallergenic !== 'boolean') {
     errors.push('hypoallergenic deve ser booleano!');
+  }
+
+  if (d.coatType !== undefined && !ALLOWED_COAT_TYPES.includes(d.coatType)) {
+    errors.push('Tipo de pelagem inválido!');
   }
 
   return { isValid: errors.length === 0, errors };
@@ -131,6 +135,7 @@ module.exports = {
   normalizeName,
   ALLOWED_SPECIES,
   ALLOWED_SIZES,
+  ALLOWED_COAT_TYPES,
   NAME_MIN,
   NAME_MAX,
   DESCRIPTION_MAX,

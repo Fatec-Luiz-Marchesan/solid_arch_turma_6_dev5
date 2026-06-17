@@ -22,16 +22,20 @@ async function updateBreed({ id, data, user, BreedRepository }) {
   const d = data || {};
   const updatePayload = {};
 
+  const targetSpecies = d.species !== undefined ? d.species : breed.species;
+
   if (d.name !== undefined) {
     const name = normalizeName(d.name);
-    // Only check uniqueness if the name actually changes
-    if (name.toLowerCase() !== String(breed.name).toLowerCase()) {
-      const existing = await BreedRepository.findByName(name);
+    const nameChanged = name.toLowerCase() !== String(breed.name).toLowerCase();
+    const speciesChanged = d.species !== undefined && d.species !== breed.species;
+
+    if (nameChanged || speciesChanged) {
+      const existing = await BreedRepository.findByName(name, targetSpecies);
       if (existing && String(existing._id) !== String(id)) {
         return {
           success: false,
           status: 409,
-          errors: ['Já existe uma raça com este nome!'],
+          errors: ['Já existe uma raça com este nome para esta espécie!'],
         };
       }
     }
@@ -50,6 +54,9 @@ async function updateBreed({ id, data, user, BreedRepository }) {
   if (d.origin !== undefined) updatePayload.origin = d.origin.trim();
   if (d.hypoallergenic !== undefined) {
     updatePayload.hypoallergenic = d.hypoallergenic;
+  }
+  if (d.coatType !== undefined) {
+    updatePayload.coatType = d.coatType;
   }
 
   const updated = await BreedRepository.update(id, updatePayload);

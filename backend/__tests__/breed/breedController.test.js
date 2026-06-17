@@ -151,4 +151,89 @@ describe('BreedController — testes do controller', () => {
       expect(res.status).toHaveBeenCalledWith(404);
     });
   });
+  describe('create — campo coatType', () => {
+    it('retorna 201 com coatType válido', async () => {
+      BreedController.setRepository(makeRepo());
+      const res = makeRes();
+      await BreedController.create(
+        makeReq({ name: 'Poodle', species: 'dog', coatType: 'curly' }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    it('retorna 422 com coatType inválido', async () => {
+      BreedController.setRepository(makeRepo());
+      const res = makeRes();
+      await BreedController.create(
+        makeReq({ name: 'Poodle', species: 'dog', coatType: 'fluffy' }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('usa default short quando coatType ausente', async () => {
+      const repo = makeRepo();
+      BreedController.setRepository(repo);
+      const res = makeRes();
+      await BreedController.create(
+        makeReq({ name: 'Beagle', species: 'dog' }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ coatType: 'short' })
+      );
+    });
+  });
+
+  describe('list — filtro coatType', () => {
+    it('retorna 422 com coatType inválido na query', async () => {
+      BreedController.setRepository(makeRepo());
+      const res = makeRes();
+      await BreedController.list(makeReq({}, {}, { coatType: 'fluffy' }), res);
+      expect(res.status).toHaveBeenCalledWith(422);
+    });
+
+    it('retorna 200 com coatType válido na query', async () => {
+      const repo = makeRepo();
+      BreedController.setRepository(repo);
+      const res = makeRes();
+      await BreedController.list(makeReq({}, {}, { coatType: 'curly' }), res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(repo.findActive).toHaveBeenCalledWith(
+        expect.objectContaining({ coatType: 'curly' }),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('create — unicidade composta name+species', () => {
+    it('permite mesmo nome em espécies diferentes', async () => {
+      const repo = makeRepo();
+      repo.findByName = jest.fn(async (name, species) => {
+        if (species === 'cat') return null;
+        return { _id: 'b0', name: 'Bulldog', species: 'dog' };
+      });
+      BreedController.setRepository(repo);
+      const res = makeRes();
+      await BreedController.create(
+        makeReq({ name: 'Bulldog', species: 'cat' }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    it('bloqueia mesmo nome na mesma espécie (409)', async () => {
+      const repo = makeRepo();
+      repo.findByName = jest.fn(async () => ({ _id: 'b0', name: 'Bulldog', species: 'dog' }));
+      BreedController.setRepository(repo);
+      const res = makeRes();
+      await BreedController.create(
+        makeReq({ name: 'Bulldog', species: 'dog' }),
+        res
+      );
+      expect(res.status).toHaveBeenCalledWith(409);
+    });
+  });
 });
