@@ -39,10 +39,8 @@ function handleError(res, err) {
   return res.status(500).json({ message: 'Erro interno do servidor!' });
 }
 
-async function safeLog(params) {
-  try {
-    await logAdminAction(params);
-  } catch (_) {}
+function safeLog(params) {
+  logAdminAction(params).catch(() => {});
 }
 
 module.exports = class AdminController {
@@ -67,7 +65,7 @@ module.exports = class AdminController {
         return res.status(result.status).json({ message: result.errors[0] });
       }
 
-      await safeLog({
+       safeLog({
         action: 'bootstrap',
         performedBy: user,
         targetUser: user,
@@ -119,7 +117,7 @@ module.exports = class AdminController {
         return res.status(result.status).json({ message: result.errors[0] });
       }
 
-      await safeLog({
+       safeLog({
         action: 'promote',
         performedBy: req.user || {},
         targetUser: result.user,
@@ -147,7 +145,7 @@ module.exports = class AdminController {
         return res.status(result.status).json({ message: result.errors[0] });
       }
 
-      await safeLog({
+      safeLog({
         action: 'demote',
         performedBy: req.user || {},
         targetUser: result.user,
@@ -177,7 +175,7 @@ module.exports = class AdminController {
         return res.status(result.status).json({ message: result.errors[0] });
       }
 
-      await safeLog({
+      safeLog({
         action: 'delete',
         performedBy: req.user || {},
         targetUser: targetBefore || { _id: req.params.id },
