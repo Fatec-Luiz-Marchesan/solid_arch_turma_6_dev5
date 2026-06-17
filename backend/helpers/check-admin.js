@@ -24,7 +24,13 @@ const checkAdmin = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    return res.status(400).json({ message: 'Token inválido!' });
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expirado! Faça login novamente.' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(400).json({ message: 'Token inválido!' });
+    }
+    return res.status(500).json({ message: 'Erro interno do servidor!' });
   }
 };
 

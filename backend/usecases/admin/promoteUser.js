@@ -1,7 +1,8 @@
 const { validateAdminAction } = require('../../helpers/validate-admin-action');
 
-async function promoteUser({ targetId, AdminRepository }) {
-  const validation = validateAdminAction({ targetId });
+async function promoteUser({ targetId, actor, AdminRepository }) {
+  const actorId = actor && actor._id ? String(actor._id) : null;
+  const validation = validateAdminAction({ targetId, actorId });
   if (!validation.isValid) {
     return { success: false, status: 422, errors: validation.errors };
   }

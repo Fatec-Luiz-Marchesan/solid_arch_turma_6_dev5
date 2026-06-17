@@ -12,6 +12,7 @@ describe('promoteUser use case', () => {
     };
     const r = await promoteUser({
       targetId: '507f1f77bcf86cd799439011',
+      actor: { _id: '507f1f77bcf86cd799439012' },
       AdminRepository: repo,
     });
     expect(r.success).toBe(true);
@@ -21,6 +22,7 @@ describe('promoteUser use case', () => {
   it('falha com ID inválido', async () => {
     const r = await promoteUser({
       targetId: 'abc',
+      actor: { _id: '507f1f77bcf86cd799439012' },
       AdminRepository: { findById: jest.fn(), promote: jest.fn() },
     });
     expect(r.status).toBe(422);
@@ -33,6 +35,7 @@ describe('promoteUser use case', () => {
     };
     const r = await promoteUser({
       targetId: '507f1f77bcf86cd799439011',
+      actor: { _id: '507f1f77bcf86cd799439012' },
       AdminRepository: repo,
     });
     expect(r.status).toBe(404);
@@ -48,9 +51,20 @@ describe('promoteUser use case', () => {
     };
     const r = await promoteUser({
       targetId: '507f1f77bcf86cd799439011',
+      actor: { _id: '507f1f77bcf86cd799439012' },
       AdminRepository: repo,
     });
     expect(r.status).toBe(422);
     expect(repo.promote).not.toHaveBeenCalled();
+  });
+
+  it('não permite admin promover a si mesmo', async () => {
+    const r = await promoteUser({
+      targetId: '507f1f77bcf86cd799439011',
+      actor: { _id: '507f1f77bcf86cd799439011' },
+      AdminRepository: { findById: jest.fn(), promote: jest.fn() },
+    });
+    expect(r.status).toBe(422);
+    expect(r.errors[0]).toMatch(/si mesmo/i);
   });
 });

@@ -770,6 +770,44 @@ brasileiro (`12345-678` ou `12345678`), `latitude` entre -90 e 90,
 - Rating é inteiro entre 1 e 5; comentário entre 10 e 1000 caracteres.
 
 ---
+---
+
+## Endpoints de Message (atualizado)
+
+| Método | Rota                                       | Ação                              |
+|--------|--------------------------------------------|---------------------------------  |
+| POST   | /messages                                  | Envia uma mensagem                |
+| GET    | /messages?page=1&limit=20                  | Lista mensagens (com paginação)   |
+| GET    | /messages/conversation/:userId/:petId      | Conversa específica               |
+| GET    | /messages/:id                              | Busca uma mensagem por id         |
+| PATCH  | /messages/:id/read                         | Marca como lida                   |
+| PATCH  | /messages/:id                              | Edita o conteúdo                  |
+| DELETE | /messages/:id                              | Remove uma mensagem               |
+
+### Melhorias implementadas
+
+- Paginação na listagem (query params `page` e `limit`, máximo 100/página).
+- Validação rigorosa de ObjectId em `receiverId` e `petId`.
+- `markAsRead`: apenas o destinatário pode marcar.
+- Conversa filtrada por pet e outro usuário.
+- Tratamento de erros no controller (try/catch com 500).
+- Refatoração do `updateMessage`: validação extraída para helper (SRP).
+
+---
+---
+
+### Melhorias no Admin (v2)
+
+- **Log de auditoria**: toda ação admin (promote, demote, delete, bootstrap)
+  é registrada com quem executou, quem foi afetado e motivo opcional.
+- **GET /admin/logs?action=promote**: lista logs, com filtro por tipo de ação.
+- **Validação de auto-ação**: admin não pode promover a si mesmo.
+- **Error handling**: controller com try/catch e middleware com tratamento
+  diferenciado de token expirado vs inválido.
+- **Campo `reason`** (opcional no body do promote/demote/delete): registra
+  justificativa no log de auditoria.
+
+---
 ### Task 1: Integrar nova tecnologia - Socket.io para tempo real
 **Pontos (Fibonacci):** 54
 
